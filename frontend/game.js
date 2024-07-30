@@ -1,63 +1,23 @@
 const apiBaseUrl = 'http://localhost:5000/api/auth';
 
-document.getElementById('loginButton').addEventListener('click', async function() {
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
-
-    if (username && password) {
-        const response = await fetch(`${apiBaseUrl}/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username, password })
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userId', data.user.id);
-            localStorage.setItem('username', data.user.username);
-            showProfileLink();
-            showLogoutButton();
-            startGame(data.user);
-        } else {
-            alert(data.message);
-        }
-    } else {
-        alert('Please enter a username and password.');
-    }
-});
-
-document.getElementById('registerButton').addEventListener('click', async function() {
-    const username = document.getElementById('registerUsername').value;
-    const password = document.getElementById('registerPassword').value;
-
-    if (username && password) {
-        const response = await fetch(`${apiBaseUrl}/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username, password })
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-            alert(data.message);
-        } else {
-            alert(data.message);
-        }
-    } else {
-        alert('Please enter a username and password.');
-    }
-});
-
 document.getElementById('logoutButton').addEventListener('click', function() {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     localStorage.removeItem('username');
     window.location.href = 'index.html';
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const token = localStorage.getItem('token');
+    const username = localStorage.getItem('username');
+
+    if (!token || !username) {
+        window.location.href = 'index.html';
+    } else {
+        showProfileLink();
+        showLogoutButton();
+        startGame({ username });
+    }
 });
 
 function showProfileLink() {
@@ -69,10 +29,6 @@ function showLogoutButton() {
 }
 
 function startGame(user) {
-    // Hide login and register forms
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('register').style.display = 'none';
-
     // Show game section
     document.getElementById('game').style.display = 'block';
 
@@ -105,9 +61,9 @@ function startGame(user) {
 
     // Add event listener to the submit button
     document.getElementById('submitGuess').addEventListener('click', async function() {
-        var userGuess = document.getElementById('guess').value;
+        const username = localStorage.getItem('username');
+
         if (clickedCoords) {
-            console.log("User's guess: " + userGuess);
             console.log("Location clicked: " + clickedCoords.lat + ", " + clickedCoords.lng);
 
             // Calculate the score
@@ -118,9 +74,8 @@ function startGame(user) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({ lat: clickedCoords.lat, lng: clickedCoords.lng, score })
+                body: JSON.stringify({ username, lat: clickedCoords.lat, lng: clickedCoords.lng, score })
             });
 
             if (response.ok) {
@@ -138,8 +93,7 @@ function startGame(user) {
 
     // Function to evaluate the guess and calculate a score
     function evaluateGuess(guessCoords) {
-        // Predefined correct answer coordinates (for example, Paris, France)
-        var correctCoords = { lat: 48.8566, lng: 2.3522 };
+        var correctCoords = { lat: 35.676, lng: 139.65};
 
         // Calculate the distance between the guess and the correct answer
         var distance = getDistance(guessCoords.lat, guessCoords.lng, correctCoords.lat, correctCoords.lng);
@@ -183,22 +137,4 @@ function startGame(user) {
         popup.style.display = 'none';
         overlay.style.display = 'none';
     });
-
 }
-
-// Check if user is already logged in
-document.addEventListener('DOMContentLoaded', function() {
-    const token = localStorage.getItem('token');
-    const username = localStorage.getItem('username');
-
-    if (token && username) {
-        showProfileLink();
-        showLogoutButton();
-        startGame({ username });
-    } else {
-        // Show login and register forms if not logged in
-        document.getElementById('login').style.display = 'flex';
-        document.getElementById('register').style.display = 'flex';
-        document.getElementById('game').style.display = 'none';
-    }
-});

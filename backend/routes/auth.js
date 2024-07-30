@@ -5,19 +5,19 @@ const User = require('../models/User');
 
 const router = express.Router();
 
-// Middleware to verify token
+// Middleware to verify token and set req.username
 function verifyToken(req, res, next) {
     const token = req.headers['authorization'];
     if (!token) return res.status(403).json({ message: 'No token provided' });
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    jwt.verify(token.split(' ')[1], process.env.JWT_SECRET, (err, decoded) => {
         if (err) return res.status(500).json({ message: 'Failed to authenticate token' });
 
-        req.userId = decoded.id;
+        req.username = decoded.username;
+        console.log(`Verified token for username: ${req.username}`); // Add logging
         next();
     });
 }
-
 // Register
 router.post('/register', async (req, res) => {
     const { username, password } = req.body;
@@ -35,32 +35,47 @@ router.post('/register', async (req, res) => {
     }
 });
 
+
 // Login
 router.post('/login', async (req, res) => {
-    const { username, password } = req.body;
     try {
+        const { username, password } = req.body;
+
+        // Check if user exists
         const user = await User.findOne({ username });
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
+        // Check password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token, user: { id: user._id, username: user.username } });
-    } catch (err) {
-        res.status(500).json({ message: 'Server error' });
+        // Create and assign token
+        const token = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        res.json({
+            message: 'Logged in successfully',
+            token,
+            userId: user._id
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'Error logging in' });
     }
 });
 
-// Save Guess
-router.post('/guess', verifyToken, async (req, res) => {
-    const { lat, lng, score } = req.body;
+// Save Guess route 
+router.post('/guess', async (req, res) => {
+    const { username, lat, lng, score } = req.body;
     try {
-        const user = await User.findById(req.userId);
+        const user = await User.findOne({ username });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -73,15 +88,29 @@ router.post('/guess', verifyToken, async (req, res) => {
     }
 });
 
-// Get Guesses
-router.get('/guesses', verifyToken, async (req, res) => {
+
+// Get Guesses route by username 
+router.get('/guesses', async (req, res) => {
+    const { username } = req.query; // Get username from query parameter
     try {
-        const user = await User.findById(req.userId);
+        const user = await User.findOne({ username });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
         res.status(200).json(user.guesses);
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+
+
+// List Users (for debugging)
+router.get('/users', async (req, res) => {
+    try {
+        const users = await User.find({});
+        res.status(200).json(users);
     } catch (err) {
         res.status(500).json({ message: 'Server error' });
     }
