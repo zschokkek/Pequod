@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Sharkwalk</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 20px;
+        }
+        .high-scores {
+            margin-bottom: 20px;
+        }
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Profile - Sharkwalk</h1>
+    </header>
+    <div class="content">
+        <div class="high-scores">
+            <h2>High Scores</h2>
+            <ul id="highScoresList">
+                <li>Score 1: 95</li>
+                <li>Score 2: 89</li>
+                <li>Score 3: 85</li>
+                <li>Score 4: 80</li>
+                <li>Score 5: 78</li>
+            </ul>
+        </div>
+        <div id="map"></div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the map
+            var map = L.map('map').setView([20, 0], 2); // Centered at (20, 0) with zoom level 2
+
+            // Add a tile layer to the map (OpenStreetMap in this case)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Function to generate random coordinates
+            function getRandomCoordinates() {
+                var lat = (Math.random() * 180 - 90).toFixed(4); // Latitude between -90 and 90
+                var lng = (Math.random() * 360 - 180).toFixed(4); // Longitude between -180 and 180
+                return [lat, lng];
+            }
+
+            // Add 10 random markers to the map
+            for (var i = 0; i < 10; i++) {
+                var coords = getRandomCoordinates();
+                L.marker(coords).addTo(map).bindPopup("Random Pin " + (i + 1));
+            }
+        });
+    </script>
+</body>
+</html>
