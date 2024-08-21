@@ -71,20 +71,23 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Save Guess route 
 router.post('/guess', async (req, res) => {
     const { username, lat, lng, score } = req.body;
     try {
         const user = await User.findOne({ username });
         if (!user) {
+            console.error(`User not found: ${username}`);
             return res.status(404).json({ message: 'User not found' });
+        } else {
+            console.log(user)
         }
 
         user.guesses.push({ lat, lng, score });
         await user.save();
         res.status(200).json({ message: 'Guess saved successfully' });
     } catch (err) {
-        res.status(500).json({ message: 'Server error' });
+        console.error('Server error:', err.message, err.stack);
+        res.status(500).json({ message: 'Server error', error: err.message });
     }
 });
 

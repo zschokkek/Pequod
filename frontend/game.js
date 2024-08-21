@@ -1,11 +1,5 @@
 const apiBaseUrl = 'http://localhost:5000/api/auth';
 
-document.getElementById('logoutButton').addEventListener('click', function() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('username');
-    window.location.href = 'index.html';
-});
 
 document.addEventListener('DOMContentLoaded', function() {
     const token = localStorage.getItem('token');
@@ -28,9 +22,47 @@ function showLogoutButton() {
     document.getElementById('logoutButton').style.display = 'block';
 }
 
-function startGame(user) {
+async function startGame(user) {
     // Show game section
     document.getElementById('game').style.display = 'block';
+
+    let correctCoords = { lat: 35.676, lng: 139.65 }; // Default coordinates
+
+    // Fetch and display the image from the backend
+    try {
+        const response = await fetch('http://localhost:2500/get-image');
+        if (response.ok) {
+            const imageBlob = await response.blob();
+            const imageUrl = URL.createObjectURL(imageBlob);
+            document.getElementById('gameImage').src = imageUrl;
+
+            // Extract EXIF data
+            EXIF.getData(imageBlob, function() {
+                const exifData = EXIF.getAllTags(this);
+                console.log('EXIF Data:', exifData);
+
+                if (exifData.GPSLatitude && exifData.GPSLongitude) {
+                    const lat = exifData.GPSLatitude;
+                    const lon = exifData.GPSLongitude;
+
+                    // Convert the latitude and longitude to decimal
+                    const latRef = exifData.GPSLatitudeRef || "N"; 
+                    const lonRef = exifData.GPSLongitudeRef || "W"; 
+                    const latitude = (lat[0] + lat[1]/60 + lat[2]/3600) * (latRef === "N" ? 1 : -1); 
+                    const longitude = (lon[0] + lon[1]/60 + lon[2]/3600) * (lonRef === "W" ? -1 : 1); 
+
+                    correctCoords = { lat: latitude, lng: longitude };
+                    console.log(`Correct location based on EXIF data: Latitude = ${latitude}, Longitude = ${longitude}`);
+                } else {
+                    console.log('No GPS data found in the image.');
+                }
+            });
+        } else {
+            console.error('Failed to load image');
+        }
+    } catch (error) {
+        console.error('Error fetching the image:', error);
+    }
 
     // Initialize the map
     var map = L.map('map').setView([20, 0], 2); // Centered at (20, 0) with zoom level 2
@@ -69,19 +101,23 @@ function startGame(user) {
             // Calculate the score
             var score = evaluateGuess(clickedCoords);
 
-            // Save the guess to the backend
-            const response = await fetch(`${apiBaseUrl}/guess`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, lat: clickedCoords.lat, lng: clickedCoords.lng, score })
-            });
-
-            if (response.ok) {
-                console.log('Guess saved successfully');
-            } else {
-                console.log('Failed to save guess');
+            try {
+                const response = await fetch(`${apiBaseUrl}/guess`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, lat: clickedCoords.lat, lng: clickedCoords.lng, score })
+                });
+            
+                if (response.ok) {
+                    console.log('Guess saved successfully');
+                } else {
+                    const errorData = await response.json();
+                    console.error('Failed to save guess:', errorData);
+                }
+            } catch (error) {
+                console.error('Error during fetch:', error);
             }
 
             // Show the score in a custom popup
@@ -93,8 +129,6 @@ function startGame(user) {
 
     // Function to evaluate the guess and calculate a score
     function evaluateGuess(guessCoords) {
-        var correctCoords = { lat: 35.676, lng: 139.65};
-
         // Calculate the distance between the guess and the correct answer
         var distance = getDistance(guessCoords.lat, guessCoords.lng, correctCoords.lat, correctCoords.lng);
 
@@ -109,9 +143,9 @@ function startGame(user) {
         var R = 6371; // Radius of the Earth in kilometers
         var dLat = (lat2 - lat1) * Math.PI / 180;
         var dLon = (lon2 - lon1) * Math.PI / 180;
-        var a = 
-            0.5 - Math.cos(dLat) / 2 + 
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        var a =
+            0.5 - Math.cos(dLat) / 2 +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
             (1 - Math.cos(dLon)) / 2;
 
         return R * 2 * Math.asin(Math.sqrt(a));
@@ -130,7 +164,7 @@ function startGame(user) {
     }
 
     // Function to close the custom popup
-    document.getElementById('closePopup').addEventListener('click', function() {
+    document.getElementById('closePopup').addEventListener('click', function () {
         var popup = document.getElementById('popup');
         var overlay = document.getElementById('overlay');
 

@@ -12,7 +12,7 @@ app.use(express.json());
 
 // CORS configuration
 app.use(cors({
-    origin: 'http://127.0.0.1:8080', // Allow requests from your frontend origin
+    origin: true, // Allow requests from your frontend origin
     optionsSuccessStatus: 200
 }));
 

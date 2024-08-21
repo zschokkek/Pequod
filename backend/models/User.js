@@ -17,6 +17,17 @@ const userSchema = new mongoose.Schema({
             lng: Number,
             score: Number
         }
+    ],
+    friends: [{ type: String }],
+    photos: [
+        {
+            url: String,
+            description: String,
+            uploadedAt: {
+                type: Date,
+                default: Date.now
+            }
+        }
     ]
 });
 

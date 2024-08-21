@@ -2,7 +2,9 @@ const apiBaseUrl = 'http://localhost:5000/api/auth';
 
 // Function to fetch and display user data
 async function loadUserProfile() {
-    const username = localStorage.getItem('username');
+    const urlParams = new URLSearchParams(window.location.search);
+    const friendUsername = urlParams.get('friend');
+    const username = friendUsername || localStorage.getItem('username');
 
     if (!username) {
         window.location.href = 'index.html';
@@ -10,7 +12,9 @@ async function loadUserProfile() {
     }
 
     // Set the username in the banner
-    document.getElementById('usernameBanner').textContent = `Welcome, ${username}`;
+    document.getElementById('usernameBanner').textContent = friendUsername 
+        ? `Viewing ${friendUsername}'s Profile` 
+        : `Welcome, ${username}`;
 
     // Initialize the map
     const map = L.map('map').setView([20, 0], 2); // Centered at (20, 0) with zoom level 2
@@ -21,10 +25,10 @@ async function loadUserProfile() {
     }).addTo(map);
 
     try {
-        // Fetch the user's guesses by username
+        // Fetch the user's or friend's guesses by username
         const response = await fetch(`${apiBaseUrl}/guesses?username=${username}`);
-
         const guesses = await response.json();
+
         if (!response.ok) {
             throw new Error(guesses.message);
         }
@@ -58,4 +62,8 @@ document.getElementById('logoutButton').addEventListener('click', function() {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     window.location.href = 'index.html';
+});
+
+document.getElementById('addFriendButton').addEventListener('click', function() {
+    window.location.href = 'friends.html';
 });

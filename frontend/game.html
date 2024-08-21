@@ -6,22 +6,27 @@
     <title>Pequod</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="styles.css">
+
 </head>
 <body>
-    <a href="profile.html" class="top-right-link" id="profileLink">Profile</a>
-    <a href="#" class="top-left-link" id="logoutButton">Logout</a>
-    <div id="game">
+    <a href="profile.html" class="top-right-link" id="profileLink" style="display:none;">Profile</a>
+    <a href="#" class="top-left-link" id="logoutButton" style="display:none;">Logout</a>
+    
+    <div id="game" style="display:none;">
         <h1>Pequod</h1>
-        <img id="gameImage" src="image_.jpg" alt="Game Image">
-        <div id="map"></div>
+        <!-- Remove static src, as it will be set dynamically -->
+        <img id="gameImage" alt="Game Image" style="display: block; max-height: 80%; max-width: 80%; margin: 0 auto;" />
+           
+        <div id="map" style="height: 500px;"></div>
+        
         <div>
             <button id="submitGuess">Submit Guess</button>
         </div>
     </div>
 
     <!-- Custom styled popup -->
-    <div class="overlay" id="overlay"></div>
-    <div class="popup" id="popup">
+    <div class="overlay" id="overlay" style="display:none;"></div>
+    <div class="popup" id="popup" style="display:none;">
         <h2>Score</h2>
         <p id="scoreText">Your score is: 0</p>
         <button id="closePopup">Close</button>
@@ -29,5 +34,7 @@
     
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="game.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js"></script>
+
 </body>
 </html>

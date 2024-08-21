@@ -1,6 +1,7 @@
 const apiBaseUrl = 'http://localhost:5000/api/auth';
 
-document.getElementById('loginButton').addEventListener('click', async function() {
+// Function to handle the login process
+async function handleLogin() {
     const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('loginPassword').value;
 
@@ -30,4 +31,16 @@ document.getElementById('loginButton').addEventListener('click', async function(
     } else {
         alert('Please enter a username and password.');
     }
+}
+
+// Attach the event listener to the login button
+document.getElementById('loginButton').addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    handleLogin();
+});
+
+// Attach the event listener to the form to submit on Enter key press
+document.getElementById('loginForm').addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent the default form submission
+    handleLogin();
 });

@@ -17,7 +17,7 @@
             padding: 10px 0;
             font-size: 24px;
         }
-        .top-right-link, .top-left-link, .bottom-left-link {
+        .top-right-link, .top-left-link, .bottom-left-link, .bottom-right-link {
             position: absolute;
             padding: 10px;
             background: #4CAF50;
@@ -37,6 +37,10 @@
             bottom: 10px;
             left: 10px;
         }
+        .bottom-right-link {
+            bottom: 10px;
+            right: 10px;
+        }
         #highScores {
             margin: 20px;
         }
@@ -55,6 +59,20 @@
             width: 100%;
             margin: 20px 0;
         }
+
+        #addFriendButton {
+            right: 10px;
+            top: 10px;
+        }
+
+        #myFriendsButton {
+            right: 10px;
+            top: 50px; /* Adjust the top position to move it below the "Add Friend" button */
+        }
+        
+        #uploadPhotoForm {
+            display: none; /* Hide the form initially */
+        }
     </style>
 </head>
 <body>
@@ -67,8 +85,62 @@
         <ul id="highScoresList"></ul>
     </div>
     <div id="map"></div>
+    <a href="friends.html" class="top-right-link" id="addFriendButton">Add Friend</a>
+    <a href="friends-list.html" class="top-right-link" id="myFriendsButton">My Friends</a>
+
+    <!-- Upload Photo Link -->
+    <a href="#" class="bottom-right-link" id="uploadPhotoLink">Upload Photo</a>
+
+    <!-- Upload Photo Form -->
+    <form id="uploadPhotoForm" enctype="multipart/form-data">
+        <input type="file" id="photoInput" name="file" accept="image/*" />
+        <input type="text" id="descriptionInput" name="description" placeholder="Enter a description" />
+        <button type="submit">Upload</button>
+    </form>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="profile.js"></script>
+    <script>
+        document.getElementById('uploadPhotoLink').addEventListener('click', function(event) {
+            event.preventDefault();
+            document.getElementById('photoInput').click();
+        });
+
+        document.getElementById('uploadPhotoForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const userId = localStorage.getItem('userId'); // Assuming user ID is stored in localStorage
+            const fileInput = document.getElementById('photoInput');
+            const descriptionInput = document.getElementById('descriptionInput');
+
+            const formData = new FormData();
+            formData.append('user_id', userId);
+            formData.append('file', fileInput.files[0]);
+            formData.append('description', descriptionInput.value);
+
+            try {
+                const response = await fetch('http://localhost:2503/upload_photo', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Photo uploaded successfully!');
+                    // Optionally, you can add the uploaded photo to the user's profile
+                } else {
+                    alert(`Error uploading photo: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to upload photo.');
+            }
+        });
+
+        document.getElementById('photoInput').addEventListener('change', function() {
+            document.getElementById('uploadPhotoForm').style.display = 'block';
+        });
+    </script>
 </body>
 </html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        #chatContainer {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #messages {
+            list-style-type: none;
+            padding: 0;
+            height: 300px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        #messages li {
+            padding: 8px;
+            margin-bottom: 10px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+        }
+        #chatInputContainer {
+            display: flex;
+        }
+        #chatInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #sendButton {
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #sendButton:hover {
+            background-color: #45a049;
+        }
+        .nav-button {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="chatContainer">
+        <h2>Chat</h2>
+        <ul id="messages"></ul>
+        <div id="chatInputContainer">
+            <input type="text" id="chatInput" placeholder="Type your message here..." />
+            <button id="sendButton">Send</button>
+        </div>
+        <a href="profile.html" class="nav-button">Back to Profile</a>
+    </div>
+
+    <script>
+        const apiBaseUrl = 'http://localhost:2505/api'; // Replace with your Python API base URL
+        const sender = localStorage.getItem('username'); // Assuming sender is logged in user
+        const receiver = new URLSearchParams(window.location.search).get('friend'); // Get receiver from query params
+
+        if (!receiver) {
+            alert('No receiver specified!');
+            throw new Error('No receiver specified');
+        }
+
+        async function fetchMessages() {
+            try {
+                const response = await fetch(`${apiBaseUrl}/messages?sender=${sender}&receiver=${receiver}`);
+                const data = await response.json();
+                const messages = document.getElementById('messages');
+                messages.innerHTML = ''; // Clear existing messages
+                data.forEach(msg => {
+                    const li = document.createElement('li');
+                    li.textContent = `${msg.sender}: ${msg.text}`;
+                    messages.appendChild(li);
+                });
+                messages.scrollTop = messages.scrollHeight; // Scroll to the bottom
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+            }
+        }
+
+        async function sendMessage(message) {
+            try {
+                const response = await fetch(`${apiBaseUrl}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: message, sender: sender, receiver: receiver })
+                });
+
+                if (response.ok) {
+                    fetchMessages(); // Refresh messages after sending
+                } else {
+                    console.error('Failed to send message');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchMessages(); // Load existing messages when the page loads
+
+            const sendButton = document.getElementById('sendButton');
+            const chatInput = document.getElementById('chatInput');
+
+            sendButton.addEventListener('click', function() {
+                const message = chatInput.value;
+                if (message) {
+                    sendMessage(message);
+                    chatInput.value = ''; // Clear input field
+                }
+            });
+
+            chatInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    sendButton.click();
+                }
+            });
+        });
+
+        // Optionally, you can refresh the messages list periodically
+        setInterval(fetchMessages, 5000); // Fetch messages every 5 seconds
+    </script>
+
+</body>
+</html>
